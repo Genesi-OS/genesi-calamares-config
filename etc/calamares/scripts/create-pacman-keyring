@@ -13,9 +13,13 @@ if command -v haveged &> /dev/null; then
     sleep 2
 fi
 
-# Initialize pacman keyring
-echo "==> Initializing pacman keyring..."
-pacman-key --init
+# Initialize pacman keyring (only if not already initialized)
+if [ ! -d /etc/pacman.d/gnupg ]; then
+    echo "==> Initializing pacman keyring..."
+    pacman-key --init
+else
+    echo "==> Pacman keyring already exists, skipping init..."
+fi
 
 # Kill haveged if we started it
 if [ ! -z "$HAVEGED_PID" ]; then
@@ -24,7 +28,7 @@ fi
 
 # Populate Arch Linux keys
 echo "==> Populating Arch Linux keys..."
-pacman-key --populate archlinux
+pacman-key --populate archlinux || true
 
 # Add CachyOS key if available (for kernel packages)
 if [ -f /usr/share/pacman/keyrings/cachyos.gpg ]; then
