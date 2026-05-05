@@ -1,6 +1,16 @@
 #!/bin/bash
+# Genesi OS - create-pacman-keyring
+# Initialize pacman keyring for package verification
+
 haveged -w 1024
 pacman-key --init
 pkill haveged
-pacman-key --add /usr/share/pacman/keyrings/cachyos.gpg && sudo pacman-key --lsign-key F3B607488DB35A47
-pacman-key --populate
+
+# Populate Arch Linux keys
+pacman-key --populate archlinux
+
+# Add CachyOS key if available (for kernel packages)
+if [ -f /usr/share/pacman/keyrings/cachyos.gpg ]; then
+    pacman-key --add /usr/share/pacman/keyrings/cachyos.gpg && pacman-key --lsign-key F3B607488DB35A47
+    pacman-key --populate cachyos
+fi
