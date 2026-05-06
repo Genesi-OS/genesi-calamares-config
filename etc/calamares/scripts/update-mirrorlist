@@ -5,7 +5,10 @@
 echo "==> Genesi OS: Updating mirrorlist..."
 
 # Use reflector if available, otherwise use default mirrors
-if command -v reflector &> /dev/null; then
+if command -v cachyos-rate-mirrors &> /dev/null; then
+    echo "==> Using cachyos-rate-mirrors to rank mirrors..."
+    cachyos-rate-mirrors || true
+elif command -v reflector &> /dev/null; then
     echo "==> Using reflector to rank mirrors..."
     reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist || true
 elif command -v rate-mirrors &> /dev/null; then
