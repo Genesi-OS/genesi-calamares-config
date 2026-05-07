@@ -203,7 +203,7 @@
           - ripgrep
 - name: "CachyOS - ZFS - Kernels"
   description: "Kernel ZFS built in modules are needed for the zfs filesystem and their kernel"
-  hidden: false
+  hidden: true
   selected: false
   critical: true
   packages:
@@ -216,7 +216,7 @@
     - linux-cachyos-tt-zfs
 - name: "CachyOS Kernels"
   description: "Selection of different cachyos kernels"
-  hidden: false
+  hidden: true
   selected: false
   critical: true
   packages:
@@ -236,7 +236,7 @@
     - linux-cachyos-tt-headers
 - name: "KDE-Desktop"
   description: "KDE-Plasma Desktop - Simple by default, powerful when needed."
-  hidden: false
+  hidden: true
   selected: true
   critical: true
   packages:
@@ -244,6 +244,7 @@
     - audiocd-kio
     - bluedevil
     - breeze-gtk
+    - tela-circle-icon-theme-green
     - cachyos-nord-kde-theme-git
     - cachyos-lavender-kde-theme-git
     - cachyos-iridescent-kde
@@ -299,8 +300,8 @@
     - xsettingsd
 - name: "Firefox and language package"
   description: "Add firefox and language pack if possible"
-  hidden: false
-  selected: false
+  hidden: true
+  selected: true
   critical: false
   packages:
     - firefox
@@ -319,8 +320,8 @@
     - opencl-nvidia
 - name: "Printing-Support"
   description: "Support for printing (Cups)"
-  hidden: false
-  selected: false
+  hidden: true
+  selected: true
   critical: true
   packages:
     - cups
@@ -339,8 +340,8 @@
     - system-config-printer
 - name: "Support for HP Printer/Scanner"
   description: "Extra Packages for HP Printer/Scanner"
-  hidden: false
-  selected: false
+  hidden: true
+  selected: true
   critical: true
   packages:
     - hplip
@@ -349,7 +350,7 @@
     - xsane
 - name: "Accessibility Tools"
   description: "Screen reader and mouse tweaks (impaired vision)"
-  hidden: false
+  hidden: true
   selected: false
   critical: true
   packages:
