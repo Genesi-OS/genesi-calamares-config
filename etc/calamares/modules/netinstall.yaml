@@ -263,9 +263,7 @@
     - khotkeys
     - plasma
     - plasma-wayland-protocols
-    - plasma-wayland-session
     - plasma-desktop
-    - plasma-framework
     - plasma-nm
     - plasma-pa
     - plasma-workspace
@@ -274,9 +272,7 @@
     - plasma-browser-integration
     - plasma-systemmonitor
     - plasma-thunderbolt
-    - ksysguard
     - pamac-aur
-    - octopi
     - spectacle
     - sddm
     - sddm-kcm
@@ -336,7 +332,6 @@
     - ghostscript
     - gsfonts
     - gutenprint
-    - splix
     - system-config-printer
 - name: "Support for HP Printer/Scanner"
   description: "Extra Packages for HP Printer/Scanner"
@@ -347,7 +342,6 @@
     - hplip
     - python-pyqt5
     - python-reportlab
-    - xsane
 - name: "Accessibility Tools"
   description: "Screen reader and mouse tweaks (impaired vision)"
   hidden: true
