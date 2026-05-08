@@ -20,6 +20,18 @@ clean_conf() {
     sed -i '/nl\.cachyos\.org/d'            "$conf"
     sed -i '/mirror\.lesviallon\.fr/d'      "$conf"
 
+    # Force SigLevel = Never globally so pacstrap never tries to verify
+    # signatures (the live ISO keyring is unreliable inside the chroot).
+    # Strip any existing SigLevel/LocalFileSigLevel/RemoteFileSigLevel lines,
+    # then inject fresh ones right after [options].
+    sed -i '/^[[:space:]]*SigLevel[[:space:]]*=/d'            "$conf"
+    sed -i '/^[[:space:]]*LocalFileSigLevel[[:space:]]*=/d'   "$conf"
+    sed -i '/^[[:space:]]*RemoteFileSigLevel[[:space:]]*=/d'  "$conf"
+    sed -i '/^\[options\]/a \
+SigLevel = Never\
+LocalFileSigLevel = Never\
+RemoteFileSigLevel = Never' "$conf"
+
     # Insert a clean [cachyos] section before [core].
     sed -i '/^\[core\]/i \
 [cachyos]\
