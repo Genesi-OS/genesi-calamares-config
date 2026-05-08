@@ -1,40 +1,73 @@
 #!/bin/bash
 # Genesi OS - update-mirrorlist
-# Simplified mirrorlist update (rate-mirrors may not be available)
+# Refreshes BOTH /etc/pacman.d/mirrorlist (Arch) and the CachyOS mirrorlists.
+# Uses reflector / rate-mirrors when available, and falls back to a curated
+# static list that deliberately skips mirror.rackspace.com (has been timing
+# out) and cdn-77.cachyos.org (DNS no longer resolves).
 
-echo "==> Genesi OS: Updating mirrorlist..."
+set +e
 
-# Use reflector if available, otherwise use default mirrors
-if command -v cachyos-rate-mirrors &> /dev/null; then
-    echo "==> Using cachyos-rate-mirrors to rank mirrors..."
-    cachyos-rate-mirrors || true
-    
-    # Also fetch CachyOS mirrors manually just to be safe
-    curl -s "https://mirror.cachyos.org/cachyos-mirrorlist" -o /etc/pacman.d/cachyos-mirrorlist || true
-    curl -s "https://mirror.cachyos.org/cachyos-v3-mirrorlist" -o /etc/pacman.d/cachyos-v3-mirrorlist || true
-    curl -s "https://mirror.cachyos.org/cachyos-v4-mirrorlist" -o /etc/pacman.d/cachyos-v4-mirrorlist || true
-    
-elif command -v reflector &> /dev/null; then
-    echo "==> Using reflector to rank mirrors..."
-    reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist || true
-elif command -v rate-mirrors &> /dev/null; then
-    echo "==> Using rate-mirrors to rank mirrors..."
-    rate-mirrors --allow-root arch > /etc/pacman.d/mirrorlist || true
-else
-    echo "==> No mirror ranking tool available, using default mirrors..."
+echo "==> Genesi OS: Updating mirrorlists..."
+
+arch_ok=false
+
+# Prefer reflector — gives the best ranked output.
+if command -v reflector &> /dev/null; then
+    echo "==> reflector: ranking Arch mirrors..."
+    if reflector --latest 30 --protocol https --sort rate \
+         --save /etc/pacman.d/mirrorlist; then
+        [ -s /etc/pacman.d/mirrorlist ] && arch_ok=true
+    fi
+fi
+
+# Second choice: rate-mirrors (Rust)
+if ! $arch_ok && command -v rate-mirrors &> /dev/null; then
+    echo "==> rate-mirrors: ranking Arch mirrors..."
+    if rate-mirrors --allow-root arch > /etc/pacman.d/mirrorlist 2>/dev/null; then
+        [ -s /etc/pacman.d/mirrorlist ] && arch_ok=true
+    fi
+fi
+
+# Fallback: curated reliable mirrors (NO rackspace — keeps timing out).
+if ! $arch_ok; then
+    echo "==> Writing fallback Arch mirrorlist..."
     cat > /etc/pacman.d/mirrorlist << 'EOF'
-##
-## Arch Linux repository mirrorlist
-##
-Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+## Arch Linux Mirrorlist - Genesi OS curated fallback
+Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
 Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch
 Server = https://mirror.osbeck.com/archlinux/$repo/os/$arch
-Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirror.fcix.net/archlinux/$repo/os/$arch
+Server = https://archlinux.mirror.constant.com/$repo/os/$arch
+Server = https://mirrors.edge.kernel.org/archlinux/$repo/os/$arch
 EOF
 fi
 
-chmod 0644 /etc/pacman.d/mirrorlist 2>/dev/null || true
-echo "==> Mirrorlist updated successfully"
+# Always strip rackspace from whatever mirrorlist we ended up with.
+sed -i '/mirror\.rackspace\.com/d' /etc/pacman.d/mirrorlist 2>/dev/null
 
-# Always exit with success to prevent installation failure
+chmod 0644 /etc/pacman.d/mirrorlist 2>/dev/null
+
+# --- CachyOS mirrorlists ---
+if command -v cachyos-rate-mirrors &> /dev/null; then
+    echo "==> cachyos-rate-mirrors: ranking CachyOS mirrors..."
+    cachyos-rate-mirrors || true
+fi
+
+# Refetch upstream cachyos lists too (overwrites if rate-mirrors didn't run).
+for variant in cachyos-mirrorlist cachyos-v3-mirrorlist cachyos-v4-mirrorlist; do
+    curl -fsSL "https://mirror.cachyos.org/$variant" \
+        -o "/etc/pacman.d/$variant" 2>/dev/null || true
+done
+
+# Strip dead mirrors from cachyos lists.
+for ml in /etc/pacman.d/cachyos-mirrorlist \
+          /etc/pacman.d/cachyos-v3-mirrorlist \
+          /etc/pacman.d/cachyos-v4-mirrorlist; do
+    [ -f "$ml" ] || continue
+    sed -i -e '/cdn-77\.cachyos\.org/d' \
+           -e '/nl\.cachyos\.org/d' \
+           -e '/mirror\.lesviallon\.fr/d' "$ml"
+done
+
+echo "==> Mirrorlists updated"
 exit 0
