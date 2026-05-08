@@ -58,5 +58,16 @@ GRUB_TERMINAL_OUTPUT=console
 EOF
 fi
 
+
+# Force graphical.target as default and enable SDDM in the target.
+# services-systemd module should already do this, but enabling it via
+# direct symlinks is idempotent and avoids relying on detection logic.
+mkdir -p "$ROOT/etc/systemd/system"
+ln -sf /usr/lib/systemd/system/graphical.target "$ROOT/etc/systemd/system/default.target"
+
+# Enable sddm.service for graphical.target
+mkdir -p "$ROOT/etc/systemd/system/display-manager.service.d"
+ln -sf /usr/lib/systemd/system/sddm.service "$ROOT/etc/systemd/system/display-manager.service" 2>/dev/null
+
 echo "==> Genesi OS: branding files written"
 exit 0
