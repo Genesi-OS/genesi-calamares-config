@@ -1,4 +1,4 @@
-- name: "CachyOS"
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿- name: "CachyOS"
   description: "needed CachyOS packages"
   hidden: true
   selected: true
