@@ -69,5 +69,34 @@ ln -sf /usr/lib/systemd/system/graphical.target "$ROOT/etc/systemd/system/defaul
 mkdir -p "$ROOT/etc/systemd/system/display-manager.service.d"
 ln -sf /usr/lib/systemd/system/sddm.service "$ROOT/etc/systemd/system/display-manager.service" 2>/dev/null
 
+# Set the genesi plymouth theme inside the target so mkinitcpio (which runs
+# after this in the Calamares sequence) bakes the right splash into the
+# initramfs. Falls back silently if plymouth or the theme is missing.
+if [ -x "$ROOT/usr/bin/plymouth-set-default-theme" ] \
+   && [ -d "$ROOT/usr/share/plymouth/themes/genesi" ]; then
+    if command -v arch-chroot >/dev/null 2>&1; then
+        arch-chroot "$ROOT" plymouth-set-default-theme genesi 2>&1 \
+            | sed 's/^/[plymouth] /' || true
+    else
+        chroot "$ROOT" plymouth-set-default-theme genesi 2>&1 \
+            | sed 's/^/[plymouth] /' || true
+    fi
+fi
+
+# Defense-in-depth: if grub.cfg already exists in the target (because
+# grubcfg ran out of order, e.g. someone re-orders the sequence later),
+# regenerate it so the GRUB_DISTRIBUTOR we just wrote takes effect.
+# Normally grubcfg runs AFTER this script so the regeneration is a no-op
+# but it costs nothing and avoids "Arch Linux" GRUB titles silently.
+if [ -x "$ROOT/usr/bin/grub-mkconfig" ] && [ -f "$ROOT/boot/grub/grub.cfg" ]; then
+    if command -v arch-chroot >/dev/null 2>&1; then
+        arch-chroot "$ROOT" grub-mkconfig -o /boot/grub/grub.cfg 2>&1 \
+            | sed 's/^/[grub-mkconfig] /' || true
+    else
+        chroot "$ROOT" grub-mkconfig -o /boot/grub/grub.cfg 2>&1 \
+            | sed 's/^/[grub-mkconfig] /' || true
+    fi
+fi
+
 echo "==> Genesi OS: branding files written"
 exit 0
