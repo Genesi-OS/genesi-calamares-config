@@ -152,5 +152,49 @@ EOF
     echo "==> Disabled KDE Plasma Welcome autostart (we have genesi-welcome)"
 fi
 
+# ---- Enable genesi-update systemd user units ---------------------------
+# The genesi-update package ships:
+#   /usr/lib/systemd/user/genesi-update.timer        — periodic update check
+#   /usr/lib/systemd/user/genesi-update.service      — one-shot check (called by timer)
+#   /usr/lib/systemd/user/genesi-update-tray.service — tray applet
+#
+# Both ship with preset=enabled but `systemctl --user enable` doesn't work
+# globally — it's per-user and the user doesn't exist yet at preset-application
+# time. So we manually create the symlinks in /etc/skel (future users) AND in
+# every /home/<user> Calamares already populated (current users).
+SKEL_TARGETS_DIR="$ROOT/etc/skel/.config/systemd/user"
+mkdir -p "$SKEL_TARGETS_DIR/timers.target.wants"
+mkdir -p "$SKEL_TARGETS_DIR/default.target.wants"
+if [ -f "$ROOT/usr/lib/systemd/user/genesi-update.timer" ]; then
+    ln -sf /usr/lib/systemd/user/genesi-update.timer \
+        "$SKEL_TARGETS_DIR/timers.target.wants/genesi-update.timer"
+    echo "==> Enabled genesi-update.timer in /etc/skel"
+fi
+if [ -f "$ROOT/usr/lib/systemd/user/genesi-update-tray.service" ]; then
+    ln -sf /usr/lib/systemd/user/genesi-update-tray.service \
+        "$SKEL_TARGETS_DIR/default.target.wants/genesi-update-tray.service"
+    echo "==> Enabled genesi-update-tray.service in /etc/skel"
+fi
+
+# Replicate for users Calamares already created.
+shopt -s nullglob
+for home in "$ROOT"/home/*; do
+    [ -d "$home" ] || continue
+    user=$(basename "$home")
+    uid=$(awk -F: -v u="$user" '$1==u{print $3}' "$ROOT/etc/passwd")
+    gid=$(awk -F: -v u="$user" '$1==u{print $4}' "$ROOT/etc/passwd")
+    [ -n "$uid" ] && [ -n "$gid" ] || continue
+    UDIR="$home/.config/systemd/user"
+    mkdir -p "$UDIR/timers.target.wants" "$UDIR/default.target.wants"
+    [ -f "$ROOT/usr/lib/systemd/user/genesi-update.timer" ] && \
+        ln -sf /usr/lib/systemd/user/genesi-update.timer \
+            "$UDIR/timers.target.wants/genesi-update.timer"
+    [ -f "$ROOT/usr/lib/systemd/user/genesi-update-tray.service" ] && \
+        ln -sf /usr/lib/systemd/user/genesi-update-tray.service \
+            "$UDIR/default.target.wants/genesi-update-tray.service"
+    chown -R "$uid:$gid" "$home/.config/systemd" 2>/dev/null
+    echo "==> Enabled genesi-update units for user '$user'"
+done
+
 echo "==> Genesi OS: branding files written"
 exit 0
