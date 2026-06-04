@@ -23,6 +23,10 @@
      # the update notifier, welcome app, and AI mode on the target.
      - genesi-update
      - genesi-welcome
+     # Genesi package installer (Qt6/Rust app store). Was only in the live ISO
+     # list, never here, so installed systems never got it — added so target
+     # installs ship it too.
+     - genesi-packageinstaller
      - genesi-ai-mode
      # llama.cpp (Vulkan) — ships `llama-server`, the backend of Genesi Turbo's
      # ⚡ speculative-decoding switch in the AI Mode Monitor. Optdepend of
