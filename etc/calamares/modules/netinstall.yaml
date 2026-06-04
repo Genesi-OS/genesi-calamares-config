@@ -21,6 +21,10 @@
      # .github/workflows/publish-packages.yml and uploaded to
      # genesi-arch/repo/x86_64. Adding them here is what actually installs
      # the update notifier, welcome app, and AI mode on the target.
+     # genesi-desktop is the meta-package that depends on the whole set; it's
+     # listed first (and the rest kept explicitly as a safety net) so that new
+     # components added to the meta later reach existing systems on `pacman -Syu`.
+     - genesi-desktop
      - genesi-update
      - genesi-welcome
      # Genesi package installer (Qt6/Rust app store). Was only in the live ISO
