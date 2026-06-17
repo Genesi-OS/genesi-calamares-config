@@ -259,10 +259,18 @@
     - linux-cachyos-pds-headers
     - linux-cachyos-tt
     - linux-cachyos-tt-headers
+# selected: false is REQUIRED for the desktop chooser to work. The
+# packagechooser (method: netinstall-select) only force-SELECTS the chosen
+# group and unselects the previously-chosen one (NetInstallPage::onActivate);
+# it never unselects a group that is `selected: true` on its own. With
+# selected: true here, KDE installed on EVERY install regardless of the
+# chooser — picking "Hyprland + caelestia-shell" still dragged in Plasma
+# (reproduced 2026-06-17). The chooser's `default: KDE-Desktop` keeps Plasma
+# the default selection, so leaving this false loses nothing.
 - name: "KDE-Desktop"
   description: "KDE-Plasma Desktop - Simple by default, powerful when needed."
   hidden: true
-  selected: true
+  selected: false
   critical: true
   packages:
     - ark
