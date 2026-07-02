@@ -391,6 +391,124 @@
     - genesi-caelestia-cli
     - genesi-caelestia-shell
     - genesi-caelestia-settings
+# --- Extra desktop environments imported from CachyOS (Roadmap 5.1). Same rules
+# as KDE-Desktop / Hyprland-Desktop above: hidden:false + selected:false so the
+# packagechooser (netinstall-select) can force-select the group whose name
+# matches the picked item id, without any group installing by default. The
+# always-on "Genesi OS" group at the top still layers the Genesi apps/branding
+# on top of whichever DE is chosen. First test batch: GNOME/Xfce/Cinnamon/MATE
+# — all ship a display manager (gdm/lightdm) that displaymanager.conf already
+# knows, so no extra display-manager wiring is needed for these four.
+- name: "GNOME-Desktop"
+  description: "GNOME desktop environment - designed to put you in control and get things done."
+  hidden: false
+  selected: false
+  critical: true
+  packages:
+    - fwupd
+    - gdm
+    - gedit
+    - gnome-backgrounds
+    - gnome-console
+    - gnome-control-center
+    - gnome-keyring
+    - gnome-shell
+    - gnome-tweaks
+    - libnma
+    - sushi
+  subgroups:
+      - name: "GNOME Apps"
+        description: "Additional software from the GNOME project"
+        critical: false
+        packages:
+          - papers
+          - loupe
+          - file-roller
+          - simple-scan
+          - gnome-disk-utility
+          - gnome-power-manager
+          - gnome-calculator
+          - gnome-nettool
+          - gnome-usage
+          - malcontent
+          - showtime
+          - gvfs-afc
+          - gvfs-nfs
+          - gvfs-smb
+          - gvfs-gphoto2
+          - gvfs-mtp
+- name: "Xfce4"
+  description: "Xfce is a lightweight desktop environment for UNIX-like operating systems. It aims to be fast and low on system resources, while still being visually appealing and user friendly."
+  hidden: false
+  selected: false
+  critical: true
+  packages:
+    - blueman
+    - file-roller
+    - galculator
+    - gvfs
+    - gvfs-afc
+    - gvfs-gphoto2
+    - gvfs-mtp
+    - gvfs-nfs
+    - gvfs-smb
+    - lightdm
+    - lightdm-gtk-greeter
+    - lightdm-gtk-greeter-settings
+    - network-manager-applet
+    - parole
+    - ristretto
+    - thunar-archive-plugin
+    - thunar-media-tags-plugin
+    - xdg-user-dirs-gtk
+    - xed
+    - xfce4
+    - xfce4-battery-plugin
+    - xfce4-datetime-plugin
+    - xfce4-mount-plugin
+    - xfce4-netload-plugin
+    - xfce4-notifyd
+    - xfce4-pulseaudio-plugin
+    - xfce4-screensaver
+    - xfce4-screenshooter
+    - xfce4-taskmanager
+    - xfce4-wavelan-plugin
+    - xfce4-weather-plugin
+    - xfce4-whiskermenu-plugin
+    - xfce4-xkb-plugin
+- name: "Cinnamon"
+  description: "Linux desktop which provides advanced innovative features and a traditional user experience."
+  hidden: false
+  selected: false
+  critical: true
+  packages:
+    - cinnamon
+    - cinnamon-translations
+    - system-config-printer
+    - gnome-keyring
+    - gnome-terminal
+    - metacity
+    - lightdm
+    - lightdm-gtk-greeter
+- name: "MATE-Desktop"
+  description: "MATE Desktop - the continuation of GNOME 2"
+  hidden: false
+  selected: false
+  critical: true
+  packages:
+    - celluloid
+    - gvfs
+    - gvfs-afc
+    - gvfs-gphoto2
+    - gvfs-mtp
+    - gvfs-nfs
+    - gvfs-smb
+    - lightdm
+    - lightdm-slick-greeter
+    - mate
+    - mate-extra
+    - network-manager-applet
+    - xdg-user-dirs-gtk
 - name: "Firefox and language package"
   description: "Add firefox and language pack if possible"
   hidden: true
