@@ -418,6 +418,10 @@
     - gnome-keyring
     - gnome-shell
     - gnome-tweaks
+    # GNOME ships no system tray; this extension provides a StatusNotifier host
+    # so the Genesi AI Mode / Containers SNI applets can appear (enabled at
+    # login by genesi-de-branding).
+    - gnome-shell-extension-appindicator
     - libnma
     - sushi
   subgroups:
