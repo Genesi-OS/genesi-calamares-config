@@ -55,15 +55,12 @@
      # genesi-ai-mode (not a hard dep — both are built by the same publish
      # pipeline, so a dep would break the build), shipped by default here.
      - genesi-llama-cpp
-     - genesi-kde-settings
      - genesi-channel
-     # Window decoration (rounded corners) + widget style/glassmorphism +
-     # branded GRUB. Built from source by publish-packages.yml. These replace
-     # the old "compile on the live ISO, cp into the target" hack
-     # (genesi-copy-klassy.sh), which left installed systems with the config
-     # pointing at klassy/Darkly but no plugin on disk -> default Breeze look.
-     - genesi-klassy
-     - genesi-darkly
+     # Branded GRUB background. Built from source by publish-packages.yml.
+     # NOTE: genesi-klassy (KWin decoration) + genesi-darkly (widget style) used
+     # to be here, but they are KDE/KWin-only and moved to the KDE-Desktop group
+     # — installing them on a non-KDE desktop is dead weight and, together with
+     # genesi-kde-settings, collided with the CachyOS WM settings.
      - genesi-grub-theme
      # Branded fastfetch greeting (logo + system info) on terminal launch.
      - genesi-fastfetch
@@ -343,6 +340,12 @@
     - xf86-video-vesa
     - xorg-xwayland
     - xsettingsd
+    # Genesi KDE/KWin theming — moved here from the always-on Genesi OS group so
+    # it only lands on Plasma (it collided with the CachyOS WM settings, which
+    # all claim the cachyos-desktop-settings singleton, on non-KDE installs).
+    - genesi-kde-settings
+    - genesi-klassy
+    - genesi-darkly
 - name: "Hyprland-Desktop"
   description: "Hyprland + caelestia-shell - Wayland tiling compositor with the Quickshell-based Caelestia design."
   # Roadmap 5.1 second desktop option. Selected from the packagechooser
