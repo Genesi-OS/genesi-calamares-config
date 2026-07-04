@@ -715,7 +715,8 @@
     # (Genesi rebrand of cachyos-openbox-settings). It carries no deps of its own
     # (CI can't pre-install them), so the tools its config needs are listed here.
     - genesi-openbox-settings
-    - nitrogen
+    # nitrogen dropped from the repos — feh (already in this group above) sets
+    # the wallpaper via the openbox autostart instead.
     - picom
     - cachyos-nord-gtk-theme-git
     - polkit-gnome
