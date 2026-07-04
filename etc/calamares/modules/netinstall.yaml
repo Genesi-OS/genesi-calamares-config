@@ -528,22 +528,9 @@
 #   * Cosmic: add sddm (its native cosmic-greeter isn't in displaymanager.conf).
 # Branding for these lands in later batches (GTK family via genesi-de-branding;
 # WMs via rebranded cachyos-*-settings).
-- name: "bspwm"
-  description: "bspwm is a tiling window manager that represents windows as the leaves of a full binary tree. bspwm supports multiple monitors and is configured and controlled through messages."
-  hidden: false
-  selected: false
-  critical: true
-  packages:
-    - cachyos-picom-config
-    - bspwm
-    - sxhkd
-    - polybar
-    - sddm
-    - alacritty
-    - openssh
-    - xorg-server
-    - xorg-xinit
-    - xorg-xrandr
+# bspwm intentionally omitted: CachyOS has no cachyos-bspwm-settings, so it
+# would install bare (no bspwmrc/sxhkdrc/panel) and boot to a frozen black
+# screen. Re-add only if we ship our own bspwm config.
 - name: "Budgie-Desktop"
   description: "Budgie - an independent, familiar, and modern desktop."
   hidden: false
