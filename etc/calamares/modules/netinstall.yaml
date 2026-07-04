@@ -724,9 +724,13 @@
     - network-manager-applet
     - openbox
     - pasystray
-    # genesi-openbox-settings brings the tint2/jgmenu/nitrogen config + its own
-    # picom (picom-ibhagwan-git), so plain picom is dropped (they conflict).
+    # genesi-openbox-settings ships the tint2/jgmenu/nitrogen/openbox config
+    # (Genesi rebrand of cachyos-openbox-settings). It carries no deps of its own
+    # (CI can't pre-install them), so the tools its config needs are listed here.
     - genesi-openbox-settings
+    - nitrogen
+    - picom
+    - cachyos-nord-gtk-theme-git
     - polkit-gnome
     - rofi
     - scrot
