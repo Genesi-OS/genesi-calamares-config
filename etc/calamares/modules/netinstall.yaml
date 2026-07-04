@@ -724,7 +724,9 @@
     - network-manager-applet
     - openbox
     - pasystray
-    - picom
+    # genesi-openbox-settings brings the tint2/jgmenu/nitrogen config + its own
+    # picom (picom-ibhagwan-git), so plain picom is dropped (they conflict).
+    - genesi-openbox-settings
     - polkit-gnome
     - rofi
     - scrot
