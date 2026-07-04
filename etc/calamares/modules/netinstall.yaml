@@ -782,21 +782,8 @@
 # are AUR-only, not in the Arch/CachyOS binary repos, so pacman hits "target not
 # found" and the critical group would abort the install. validate-install caught
 # this. Re-add once we have an AUR-build step in the pipeline.
-- name: "Wayfire"
-  description: "Wayfire is a wayland compositor based on wlroots. It aims to create a customizable, extendable and lightweight environment without sacrificing its appearance."
-  hidden: false
-  selected: false
-  expanded: false
-  critical: true
-  packages:
-    - cachyos-wayfire-settings
-    - wayfire-desktop-git
-    - egl-wayland
-    - wayland-protocols
-    - wofi
-    - sddm
-    - xorg-xhost
-    - xorg-xwayland
+# Wayfire intentionally omitted: wlroots/GL compositor that black-screens under
+# VirtualBox software rendering, and dropped by request. Re-add if desired.
 - name: "Firefox and language package"
   description: "Add firefox and language pack if possible"
   hidden: true
