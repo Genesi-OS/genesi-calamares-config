@@ -1,70 +1,64 @@
-#!/bin/bash
-# Genesi OS - authoritative GRUB finalization.
-#
-# Runs LAST in the install (after the bootloader + grubcfg modules) with
-# dontChroot:true; Calamares passes the target mount point as $ROOT.
-#
-# Why this exists: the 2026-06-01 install reproduced a GRUB menu titled
-# "Arch Linux" on a black background, even though /etc/default/grub already
-# had GRUB_DISTRIBUTOR='Genesi OS'. Two root causes:
-#   * grub.cfg was generated before GRUB_DISTRIBUTOR was applied and never
-#     regenerated, so the menu titles stayed "Arch Linux".
-#   * GRUB_THEME pointed at a cachyos theme that doesn't exist -> black menu.
-# Rather than depend on the (clearly unreliable) module ordering, this script
-# rewrites /etc/default/grub deterministically and regenerates grub.cfg inside
-# the target chroot. Idempotent and best-effort: it must never abort the install.
-
-set +e
+#!/usr/bin/env bash
+# Finalize the installed Genesi GRUB menu after Calamares installs the loader.
+# The active menu is never replaced until its candidate has passed validation.
+set -euo pipefail
 exec 2>&1
-trap 'exit 0' EXIT
 
 ROOT="${ROOT:-/mnt}"
-GD="$ROOT/etc/default/grub"
+defaults="$ROOT/etc/default/grub"
+candidate=/boot/grub/.grub.cfg.genesi-install
 
-echo "==> Genesi OS: finalizing GRUB (distributor + background + regen) in $ROOT"
-mkdir -p "$ROOT/etc/default"
-[ -f "$GD" ] || : > "$GD"
+echo "==> Genesi OS: finalizing and validating GRUB in $ROOT"
+mkdir -p "$ROOT/etc/default" "$ROOT/boot/grub"
+[ -f "$defaults" ] || : > "$defaults"
 
 set_kv() {
-    # set_kv KEY VALUE  -> ensures `KEY=VALUE` (uncommented) exists in $GD
-    local key="$1" val="$2"
-    if grep -q "^[#[:space:]]*${key}=" "$GD"; then
-        sed -i "s|^[#[:space:]]*${key}=.*|${key}=${val}|" "$GD"
+    local key="$1" value="$2"
+    if grep -q "^[#[:space:]]*${key}=" "$defaults"; then
+        sed -i "s|^[#[:space:]]*${key}=.*|${key}=${value}|" "$defaults"
     else
-        printf '%s=%s\n' "$key" "$val" >> "$GD"
+        printf '%s=%s\n' "$key" "$value" >> "$defaults"
     fi
 }
 
 set_kv GRUB_DISTRIBUTOR '"Genesi OS"'
-
-# Drop any GRUB_THEME (the old cachyos path doesn't exist). Use a branded
-# background image + colors instead — these render reliably with gfxterm and
-# GRUB's built-in font, no theme engine / generated .pf2 required.
-sed -i '/^[#[:space:]]*GRUB_THEME=/d' "$GD"
-
-if [ -f "$ROOT/usr/share/grub/themes/genesi/background.png" ]; then
-    set_kv GRUB_BACKGROUND '"/usr/share/grub/themes/genesi/background.png"'
-    echo "==> Using Genesi GRUB background"
-else
-    echo "==> WARNING: genesi-grub-theme background not found; using colors only"
-fi
-
-set_kv GRUB_COLOR_NORMAL    '"light-gray/black"'
-set_kv GRUB_COLOR_HIGHLIGHT '"black/green"'
+[ -f "$ROOT/usr/share/grub/themes/genesi/theme.txt" ] \
+    || { echo "==> ERROR: Genesi GRUB theme is missing"; exit 1; }
+[ -f "$ROOT/usr/share/grub/themes/genesi/background.png" ] \
+    || { echo "==> ERROR: Genesi GRUB background is missing"; exit 1; }
+set_kv GRUB_THEME '"/usr/share/grub/themes/genesi/theme.txt"'
+set_kv GRUB_BACKGROUND '"/usr/share/grub/themes/genesi/background.png"'
+set_kv GRUB_COLOR_NORMAL '"light-gray/black"'
+set_kv GRUB_COLOR_HIGHLIGHT '"white/dark-gray"'
 set_kv GRUB_TERMINAL_OUTPUT '"gfxterm"'
-set_kv GRUB_GFXMODE         '"auto"'
+set_kv GRUB_GFXMODE '"1024x768,1280x720,1920x1080,auto"'
 
-# Regenerate grub.cfg so the menu titles use GRUB_DISTRIBUTOR and the
-# background/colors apply. Prefer arch-chroot; fall back to chroot.
-if [ -x "$ROOT/usr/bin/grub-mkconfig" ]; then
-    if command -v arch-chroot >/dev/null 2>&1; then
-        arch-chroot "$ROOT" grub-mkconfig -o /boot/grub/grub.cfg 2>&1 | sed 's/^/[grub] /'
-    else
-        chroot "$ROOT" grub-mkconfig -o /boot/grub/grub.cfg 2>&1 | sed 's/^/[grub] /'
-    fi
+[ -x "$ROOT/usr/bin/grub-mkconfig" ] \
+    || { echo "==> ERROR: grub-mkconfig is missing"; exit 1; }
+[ -x "$ROOT/usr/bin/grub-script-check" ] \
+    || { echo "==> ERROR: grub-script-check is missing"; exit 1; }
+
+if command -v arch-chroot >/dev/null 2>&1; then
+    run_target() { arch-chroot "$ROOT" "$@"; }
 else
-    echo "==> WARNING: grub-mkconfig not present in target; skipping regen"
+    run_target() { chroot "$ROOT" "$@"; }
 fi
 
-echo "==> Genesi OS: GRUB finalized"
-exit 0
+rm -f "$ROOT$candidate"
+trap 'rm -f "$ROOT/boot/grub/.grub.cfg.genesi-install"' EXIT
+run_target grub-mkconfig -o "$candidate" 2>&1 | sed 's/^/[grub] /'
+run_target grub-script-check "$candidate"
+grep -Eq '^[[:space:]]*(menuentry|submenu)[[:space:]]' "$ROOT$candidate" \
+    || { echo "==> ERROR: generated GRUB menu has no entries"; exit 1; }
+grep -Eq '(^|[[:space:]])(linux|linuxefi)[[:space:]].*(vmlinuz|/boot/)' "$ROOT$candidate" \
+    || { echo "==> ERROR: generated GRUB menu has no Linux kernel"; exit 1; }
+
+if [ -s "$ROOT/boot/grub/grub.cfg" ] \
+   && run_target grub-script-check /boot/grub/grub.cfg >/dev/null 2>&1; then
+    cp -a "$ROOT/boot/grub/grub.cfg" "$ROOT/boot/grub/grub.cfg.genesi-last-good"
+fi
+chmod 600 "$ROOT$candidate"
+mv -f "$ROOT$candidate" "$ROOT/boot/grub/grub.cfg"
+trap - EXIT
+
+echo "==> Genesi OS: validated GRUB menu installed atomically"
