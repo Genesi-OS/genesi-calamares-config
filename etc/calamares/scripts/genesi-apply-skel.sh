@@ -5,10 +5,11 @@
 # fix ownership. In the current sequence copy_genesi runs BEFORE users,
 # so /home is empty and this loop is a no-op — but it costs nothing.
 #
-# Called from shellprocess@copy_genesi (dontChroot: true). Calamares
-# passes the target rootMountPoint as $ROOT.
+# Called from shellprocess@copy_genesi (dontChroot: true), which passes the
+# target rootMountPoint as the first argument (Calamares expands ${ROOT} in
+# the command string only — it does NOT export ROOT into the environment).
 set -u
-ROOT="${ROOT:-/mnt}"
+ROOT="${1:-${ROOT:-/mnt}}"
 
 shopt -s nullglob
 for home in "$ROOT"/home/*; do

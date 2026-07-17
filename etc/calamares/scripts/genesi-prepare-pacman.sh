@@ -15,9 +15,10 @@ set +e
 exec 2>&1
 trap 'exit 0' EXIT
 
-# Calamares passes ROOT as the target mount point (e.g. /tmp/calamares-root-XXX).
-# Fall back to /mnt for safety.
-ROOT="${ROOT:-/mnt}"
+# The target mount point (e.g. /tmp/calamares-root-XXX) arrives as the first
+# argument — Calamares expands ${ROOT} in the conf command string only, it
+# does NOT export ROOT into the environment. Fall back to /mnt for safety.
+ROOT="${1:-${ROOT:-/mnt}}"
 
 echo "==> Genesi OS: preparing pacman (target=$ROOT)"
 
@@ -37,7 +38,7 @@ done
 #    fix-pacman-repos.sh is provided alongside this script.
 # --------------------------------------------------------------------------
 if [ -x /etc/calamares/scripts/fix-pacman-repos.sh ]; then
-    bash /etc/calamares/scripts/fix-pacman-repos.sh || true
+    bash /etc/calamares/scripts/fix-pacman-repos.sh "$ROOT" || true
 fi
 
 # Strip stale [genesi] section if present (live ISO)

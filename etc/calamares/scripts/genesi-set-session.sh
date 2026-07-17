@@ -18,11 +18,12 @@
 # previous Plasma-X11 default.
 #
 # Called from shellprocess@genesi_session (dontChroot: true), AFTER the users
-# module, so /home/<user> already exists. Calamares passes the target
-# rootMountPoint as $ROOT. Every write is guarded so a hiccup never aborts the
-# install.
+# module, so /home/<user> already exists. The target rootMountPoint arrives as
+# the first argument (Calamares expands ${ROOT} in the command string only —
+# it does NOT export ROOT into the environment). Every write is guarded so a
+# hiccup never aborts the install.
 set -u
-ROOT="${ROOT:-/mnt}"
+ROOT="${1:-${ROOT:-/mnt}}"
 
 mkdir -p "$ROOT/var/lib/AccountsService/users" 2>/dev/null || true
 

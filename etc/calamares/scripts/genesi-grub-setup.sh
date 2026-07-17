@@ -4,11 +4,18 @@
 set -euo pipefail
 exec 2>&1
 
-ROOT="${ROOT:-/mnt}"
+# Calamares does NOT export ROOT into the environment — the shellprocess
+# module only expands ${ROOT} inside the command string. The target mount
+# point (e.g. /tmp/calamares-root-XXXX) is therefore passed as the FIRST
+# ARGUMENT by shellprocess_genesi_grub.conf. The env/`/mnt` fallbacks only
+# serve manual runs from a rescue shell.
+ROOT="${1:-${ROOT:-/mnt}}"
 defaults="$ROOT/etc/default/grub"
 candidate=/boot/grub/.grub.cfg.genesi-install
 
 echo "==> Genesi OS: finalizing and validating GRUB in $ROOT"
+[ -d "$ROOT/etc" ] && [ -d "$ROOT/usr" ] \
+    || { echo "==> ERROR: '$ROOT' does not look like an installed target root"; exit 1; }
 mkdir -p "$ROOT/etc/default" "$ROOT/boot/grub"
 [ -f "$defaults" ] || : > "$defaults"
 

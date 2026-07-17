@@ -6,6 +6,10 @@
 
 set +e
 
+# Target root comes as $1 when invoked from genesi-prepare-pacman.sh (the
+# ROOT env var is never set by Calamares).
+ROOT="${1:-${ROOT:-}}"
+
 clean_conf() {
     local conf="$1"
     [ -f "$conf" ] || return 0

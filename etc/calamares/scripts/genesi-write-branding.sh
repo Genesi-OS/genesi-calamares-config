@@ -7,7 +7,10 @@ set +e
 exec 2>&1
 trap 'exit 0' EXIT
 
-ROOT="${ROOT:-/mnt}"
+# The target mount point arrives as the first argument — Calamares expands
+# ${ROOT} in the conf command string only; it does NOT export ROOT into the
+# environment. /mnt is a last-resort fallback for manual runs.
+ROOT="${1:-${ROOT:-/mnt}}"
 
 echo "==> Genesi OS: writing branding files to $ROOT"
 

@@ -6,10 +6,11 @@
 # default so Plasma 6 Wayland features (fractional scaling, HDR, gestures)
 # stay available.
 #
-# Called from shellprocess@copy_genesi (dontChroot: true). Calamares passes
-# the target rootMountPoint as $ROOT.
+# Called from shellprocess@copy_genesi (dontChroot: true), which passes the
+# target rootMountPoint as the first argument (Calamares expands ${ROOT} in
+# the command string only — it does NOT export ROOT into the environment).
 set -u
-ROOT="${ROOT:-/mnt}"
+ROOT="${1:-${ROOT:-/mnt}}"
 
 mkdir -p "$ROOT/etc/sddm.conf.d"
 
