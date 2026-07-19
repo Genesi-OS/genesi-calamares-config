@@ -64,6 +64,13 @@
      - genesi-grub-theme
      # Branded fastfetch greeting (logo + system info) on terminal launch.
      - genesi-fastfetch
+     # CachyOS replaced zlib with zlib-ng. zlib-ng-compat is pinned in pacstrap
+     # basePackages (see pacstrap.conf); the lib32 variant is pinned HERE (the
+     # netinstall set installs in one pacman transaction, so any later
+     # lib32-zlib dependency resolves to this provider). Without both, the
+     # user's first `pacman -Syu` interrupts with two "Replace ... with
+     # cachyos/...-zlib-ng-compat?" questions (reported 2026-07-18).
+     - lib32-zlib-ng-compat
      # Genesi look for the GTK desktops (GNOME/Xfce/Cinnamon/MATE): a login-time
      # script that applies wallpaper/theme/accent/launchers. Always-on so every
      # DE install gets it; it no-ops on KDE/Hyprland (which brand themselves).
