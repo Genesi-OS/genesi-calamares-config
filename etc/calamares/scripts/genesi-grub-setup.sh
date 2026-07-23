@@ -16,6 +16,22 @@ candidate=/boot/grub/.grub.cfg.genesi-install
 echo "==> Genesi OS: finalizing and validating GRUB in $ROOT"
 [ -d "$ROOT/etc" ] && [ -d "$ROOT/usr" ] \
     || { echo "==> ERROR: '$ROOT' does not look like an installed target root"; exit 1; }
+
+# Self-gate: genesi-grub-setup.sh and genesi-limine-setup.sh both run in the
+# install sequence, but only one must act. The bootloader module writes
+# /etc/default/limine ONLY for a Limine install, so its presence means Limine is
+# the chosen loader — skip GRUB finalization (grub is still pacstrapped, so its
+# binaries exist, but it is NOT the active bootloader). This is what prevents a
+# Limine install from aborting on the grub-theme/binary `exit 1` checks below.
+if [ -e "$ROOT/etc/default/limine" ]; then
+    echo "==> Limine is the selected bootloader (/etc/default/limine present) — skipping GRUB finalization"
+    exit 0
+fi
+# Also skip cleanly if grub-mkconfig is somehow absent (manual runs on a non-GRUB target).
+if [ ! -x "$ROOT/usr/bin/grub-mkconfig" ]; then
+    echo "==> GRUB is not installed on '$ROOT' — not a GRUB install, skipping"
+    exit 0
+fi
 mkdir -p "$ROOT/etc/default" "$ROOT/boot/grub"
 [ -f "$defaults" ] || : > "$defaults"
 
