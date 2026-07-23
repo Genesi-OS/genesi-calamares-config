@@ -27,11 +27,11 @@ if [ -e "$ROOT/etc/default/limine" ]; then
     echo "==> Limine is the selected bootloader (/etc/default/limine present) — skipping GRUB finalization"
     exit 0
 fi
-# Also skip cleanly if grub-mkconfig is somehow absent (manual runs on a non-GRUB target).
-if [ ! -x "$ROOT/usr/bin/grub-mkconfig" ]; then
-    echo "==> GRUB is not installed on '$ROOT' — not a GRUB install, skipping"
-    exit 0
-fi
+# NOTE: deliberately no "grub-mkconfig missing -> skip" guard here. grub is ALWAYS
+# in pacstrap basePackages, so it would never fire on a real install, and it would
+# mask the hard `grub-mkconfig is missing` error below that ci/validate-install.sh
+# asserts on to prove this script honors its ROOT argument (see the 2026-07-17
+# "theme is missing" abort). The Limine gate above is the only gate needed.
 mkdir -p "$ROOT/etc/default" "$ROOT/boot/grub"
 [ -f "$defaults" ] || : > "$defaults"
 
