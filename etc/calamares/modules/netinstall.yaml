@@ -62,13 +62,6 @@
      # — installing them on a non-KDE desktop is dead weight and, together with
      # genesi-kde-settings, collided with the CachyOS WM settings.
      - genesi-grub-theme
-     # Limine bootloader binary. The installer's bootloader step (Limine is the
-     # default choice now) runs `limine-install`/`limine bios-install` INSIDE the
-     # target chroot, so the binary must already be on the target here. Inert for
-     # GRUB installs (an unused /usr/bin/limine). The Limine snapshot stack
-     # (limine-snapper-sync, limine-mkinitcpio-hook) is pulled only WHEN Limine is
-     # chosen, by genesi-limine-setup.sh, so GRUB installs stay lean.
-     - limine
      # Branded fastfetch greeting (logo + system info) on terminal launch.
      - genesi-fastfetch
      # CachyOS replaced zlib with zlib-ng. zlib-ng-compat is pinned in pacstrap
