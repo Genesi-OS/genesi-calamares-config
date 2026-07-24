@@ -40,15 +40,47 @@ if [ ! -e "$ROOT/etc/default/limine" ]; then
     exit 0
 fi
 
-# The bootloader module writes limine.conf into the ESP (path depends on the
-# mount layout). Locate it; if it isn't there, Limine wasn't the active loader
-# (or the module failed) — nothing to finalize, exit cleanly.
-limine_conf="$(find "$ROOT/boot" -maxdepth 4 -name 'limine.conf' 2>/dev/null | head -n1)"
-if [ -z "$limine_conf" ]; then
-    warn "no limine.conf found under $ROOT/boot — not a Limine install, skipping"
+# ---- CRITICAL: make @ the DEFAULT btrfs subvolume ---------------------------
+# Limine (unlike GRUB) reads the btrfs DEFAULT subvolume. Genesi mounts / from
+# the @ subvolume (subvol=@) while the default stays the top-level (subvolid 5),
+# so limine-bios.sys, limine.conf and the kernels all live inside @ and are
+# INVISIBLE to Limine's view -> BIOS panics "Stage 3 file not found" and UEFI
+# fails to load the kernel. Point the default at @ so Limine's filesystem view
+# matches the running system's fstab. Runs against the mounted target with the
+# live-env btrfs (the default subvolid is stored in the FS metadata, so it
+# persists across reboots). Idempotent, guarded, non-fatal.
+if [ "$(findmnt -no FSTYPE "$ROOT" 2>/dev/null || true)" = "btrfs" ] \
+   && command -v btrfs >/dev/null 2>&1; then
+    # rootid = the subvolume id of the subvolume mounted at $ROOT (i.e. @).
+    root_subvol_id="$(btrfs inspect-internal rootid "$ROOT" 2>/dev/null || true)"
+    if [ -n "$root_subvol_id" ] && [ "$root_subvol_id" != "5" ]; then
+        if btrfs subvolume set-default "$root_subvol_id" "$ROOT" 2>/dev/null; then
+            log "btrfs default subvolume set to the root subvolume @ (id $root_subvol_id)"
+        else
+            warn "could not set the btrfs default subvolume — Limine may not find limine-bios.sys on BIOS"
+        fi
+    fi
+fi
+
+# Locate limine.conf (for the cosmetic rebrand later). The bootloader module
+# writes it into the ESP on UEFI (<esp>/limine.conf) but at the target ROOT on
+# BIOS (efi_directory is ""), so search both. Not finding it is NOT fatal — the
+# /etc/default/limine gate above already proved this is a Limine install, and
+# limine-update below regenerates the config; we just skip the rebrand.
+locate_limine_conf() {
+    find "$ROOT" -maxdepth 3 -name 'limine.conf' -not -path '*/.snapshots/*' 2>/dev/null | head -n1
+}
+limine_conf="$(locate_limine_conf)"
+if [ -n "$limine_conf" ]; then
+    log "found limine.conf at ${limine_conf#$ROOT}"
+else
+    # The bootloader module always writes limine.conf for a Limine install, so an
+    # empty result means the module failed. limine-install has already run, so
+    # the system is as bootable as it will get here — stop before the chroot
+    # steps (this is also the state ci/validate-install.sh simulates).
+    warn "no limine.conf found under $ROOT — the bootloader module wrote none; nothing more to finalize"
     exit 0
 fi
-log "found limine.conf at ${limine_conf#$ROOT}"
 
 # Run target-side commands in the chroot. arch-chroot sets up the API mounts
 # (proc/sys/dev + resolv.conf) that pacman needs; fall back to plain chroot.
@@ -105,13 +137,19 @@ fi
 log "running limine-update"
 run_target limine-update || warn "limine-update failed (will retry on the next kernel update)"
 
+# limine-update may have created/moved limine.conf (e.g. from the module's BIOS
+# root path to /boot), so re-locate it for the checks and rebrand below.
+limine_conf="$(locate_limine_conf)"
+
 # If, after limine-update, the menu still has no kernel entry, force the
 # limine-mkinitcpio-hook to fire by regenerating the initramfs. This is a safety
 # net so the installed system is bootable; mkinitcpio -P is idempotent.
-if ! grep -Eq '(^|[[:space:]])(kernel_path|image_path|module_path)[[:space:]]*[:=]' "$limine_conf" 2>/dev/null; then
+if [ -n "$limine_conf" ] \
+   && ! grep -Eq '(^|[[:space:]])(kernel_path|image_path|module_path)[[:space:]]*[:=]' "$limine_conf" 2>/dev/null; then
     warn "no boot entries after limine-update — regenerating initramfs to trigger the Limine hook"
     run_target mkinitcpio -P || warn "mkinitcpio -P failed"
     run_target limine-update || true
+    limine_conf="$(locate_limine_conf)"
 fi
 
 # ---- 3. rebrand the finished limine.conf to Genesi (cosmetic, non-fatal) -----
@@ -121,17 +159,21 @@ fi
 # bootloader module from limineSplashLogo) and the menu name below still make it
 # clearly Genesi. Palette values are graphite/dark to match the Genesi brand and
 # are easy to tune here.
-log "applying Genesi branding to limine.conf"
-# Menu group name: the module writes an OS group header for the base distro.
-sed -i 's|^/+CachyOS$|/+Genesi OS|' "$limine_conf" 2>/dev/null || true
-# Theme author comment left by the upstream module.
-sed -i 's|^# CachyOS Limine theme$|# Genesi OS Limine theme|' "$limine_conf" 2>/dev/null || true
-sed -i '\|^# Author: diegons490|d' "$limine_conf" 2>/dev/null || true
-# Genesi graphite palette (ANSI: black;red;green;yellow;blue;magenta;cyan;white).
-sed -i 's|^term_palette:.*|term_palette: 181a20;e06c75;98c379;e5c07b;61afef;c678dd;56b6c2;abb2bf|' \
-    "$limine_conf" 2>/dev/null || true
-sed -i 's|^term_palette_bright:.*|term_palette_bright: 2c313a;e06c75;98c379;e5c07b;61afef;c678dd;56b6c2;c8ccd4|' \
-    "$limine_conf" 2>/dev/null || true
+if [ -n "$limine_conf" ]; then
+    log "applying Genesi branding to ${limine_conf#$ROOT}"
+    # Menu group name: the module writes an OS group header for the base distro.
+    sed -i 's|^/+CachyOS$|/+Genesi OS|' "$limine_conf" 2>/dev/null || true
+    # Theme author comment left by the upstream module.
+    sed -i 's|^# CachyOS Limine theme$|# Genesi OS Limine theme|' "$limine_conf" 2>/dev/null || true
+    sed -i '\|^# Author: diegons490|d' "$limine_conf" 2>/dev/null || true
+    # Genesi graphite palette (ANSI: black;red;green;yellow;blue;magenta;cyan;white).
+    sed -i 's|^term_palette:.*|term_palette: 181a20;e06c75;98c379;e5c07b;61afef;c678dd;56b6c2;abb2bf|' \
+        "$limine_conf" 2>/dev/null || true
+    sed -i 's|^term_palette_bright:.*|term_palette_bright: 2c313a;e06c75;98c379;e5c07b;61afef;c678dd;56b6c2;c8ccd4|' \
+        "$limine_conf" 2>/dev/null || true
+else
+    warn "no limine.conf to rebrand (limine-update did not produce one) — Limine still boots unbranded"
+fi
 
 log "Limine finalization complete"
 exit 0
