@@ -320,6 +320,21 @@
     - plasma-nm
     - plasma-pa
     - plasma-workspace
+    # plasma-x11-session ships /usr/share/xsessions/plasmax11.desktop. In
+    # Plasma 6 the X11 session is a SEPARATE package: without it the installed
+    # system has ONLY the Wayland session, which fails on VirtualBox/VMSVGA (no
+    # DRM/GBM/EGL) and loops back to the login screen ("Could not start systemd
+    # managed Plasma session: TransactionIsDestructive", 2026-06-05). Genesi
+    # defaults new users to this X11 session (shellprocess@genesi_session), so
+    # it is REQUIRED, not optional.
+    #
+    # It used to live in pacstrap.conf's basePackages, which is exactly why
+    # every install got Plasma regardless of the desktop chooser. It moved here
+    # with the rest of the Plasma stack: KDE still gets it, everyone else
+    # finally does not.
+    - plasma-x11-session
+    # KDE's polkit authentication agent, likewise moved out of basePackages.
+    - polkit-kde-agent
     - plasma-integration
     - plasma-firewall
     - plasma-browser-integration
