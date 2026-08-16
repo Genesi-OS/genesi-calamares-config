@@ -314,7 +314,28 @@
     - kscreen
     - kde-gtk-config
     - kinfocenter
-    - plasma
+    # NOT the `plasma` GROUP. Verified against archlinux.org: plasma-bigscreen
+    # declares groups=["plasma"], so listing the group installed the TV shell
+    # alongside the desktop one -- and it won, replacing the whole Plasma shell
+    # with org.kde.bigscreen.homescreen (no taskbar, TV launcher). Reported from
+    # a real install 2026-08-15; removing plasma-bigscreen by hand fixed it.
+    # plasma-mobile and plasma-nano are in the same group for the same reason.
+    #
+    # The members that matter are listed explicitly instead. plasma-desktop
+    # already depends on plasma-workspace, systemsettings, powerdevil,
+    # polkit-kde-agent, kmenuedit and kpipewire, so those resolve on their own;
+    # kwin is NOT one of its dependencies (checked) and would leave the install
+    # with no compositor, so it is named here.
+    - kwin
+    - kscreenlocker
+    - kactivitymanagerd
+    - kde-cli-tools
+    - kdeplasma-addons
+    - kwallet-pam
+    - milou
+    - breeze
+    - plasma-workspace-wallpapers
+    - xdg-desktop-portal-kde
     - plasma-wayland-protocols
     - plasma-desktop
     - plasma-nm
