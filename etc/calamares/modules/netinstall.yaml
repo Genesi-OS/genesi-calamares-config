@@ -389,6 +389,13 @@
     - genesi-kde-settings
     - genesi-klassy
     - genesi-darkly
+    # The update page inside Plasma System Settings. KDE-only by construction --
+    # it is a KCM, a C++ plugin systemsettings loads -- so it cannot live in
+    # genesi-desktop, which is shared by every desktop. It has been built,
+    # published and signed since it was written, and nothing installed it: a
+    # KDE user had no update page at all while the Hyprland user did. This line
+    # is the whole of the wiring it was missing.
+    - genesi-update-kcm
 - name: "Hyprland-Desktop"
   description: "Hyprland + caelestia-shell - Wayland tiling compositor with the Quickshell-based Caelestia design."
   # Roadmap 5.1 second desktop option. Selected from the packagechooser
