@@ -4,10 +4,12 @@
 #
 # WHY: the Calamares packagechooser lets the user pick Plasma (default) OR
 # "Hyprland + caelestia-shell". The session default must follow that choice:
-#   * Plasma  -> Plasma X11 (plasmax11.desktop). Plasma 6 defaults to Wayland,
-#     which breaks on VirtualBox/VMSVGA and some NVIDIA setups (SDDM bounces back
-#     to the greeter). X11 Plasma runs everywhere, so it's the safe default; the
-#     Wayland session stays in the SDDM menu for capable hardware.
+#   * Plasma  -> Plasma Wayland (plasma.desktop). Plasma 6.8 removed the X11
+#     session: Arch dropped plasma-x11-session and kwin-x11 (2026-10), so the
+#     old plasmax11.desktop default would point every new account at a session
+#     that does not exist -- a login loop on the first boot. X11 is still picked
+#     when its session file IS in the target (an older Plasma), because it was
+#     the safer default where it existed (VirtualBox/VMSVGA, some NVIDIA).
 #   * Hyprland -> hyprland.desktop. Hyprland is Wayland-only (no X11 session
 #     exists), so there's nothing to fall back to — we point the user straight at
 #     it. (Hyprland in a VM with a broken Wayland stack is a known limitation,
@@ -48,12 +50,16 @@ if [ -e "$ROOT/usr/bin/Hyprland" ] && [ ! -e "$ROOT/usr/bin/plasmashell" ]; then
     SESSION_LINE="Session=hyprland.desktop"
     label="Hyprland (Wayland)"
 elif [ -e "$ROOT/usr/bin/plasmashell" ]; then
-    # Plasma 6 defaults to Wayland, which breaks on VirtualBox/VMSVGA and some
-    # NVIDIA setups; force the X11 session, which runs everywhere. The Wayland
-    # session stays in the SDDM menu for capable hardware.
-    SESSION_LINE="Session=plasmax11.desktop"
-    XSESSION_LINE="XSession=plasmax11"
-    label="Plasma X11"
+    # Decided by what is installed, never assumed: a session file that is not
+    # there is a failed first login.
+    if [ -e "$ROOT/usr/share/xsessions/plasmax11.desktop" ]; then
+        SESSION_LINE="Session=plasmax11.desktop"
+        XSESSION_LINE="XSession=plasmax11"
+        label="Plasma X11"
+    else
+        SESSION_LINE="Session=plasma.desktop"
+        label="Plasma (Wayland)"
+    fi
 elif [ -e "$ROOT/usr/bin/gnome-shell" ]; then
     # GNOME (GDM). gnome.desktop is the Wayland session; GDM cleanly falls back
     # to X11 (gnome-xorg) when Wayland can't start, so this is safe on VMs too.

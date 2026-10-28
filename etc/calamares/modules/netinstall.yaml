@@ -247,6 +247,8 @@
           - vi
           - wget
           - ripgrep
+# cfs, pds and tt (and their -zfs builds) were dropped by CachyOS (2026-10);
+# naming them here failed the ISO gate ("target not found").
 - name: "CachyOS - ZFS - Kernels"
   description: "Kernel ZFS built in modules are needed for the zfs filesystem and their kernel"
   hidden: true
@@ -256,10 +258,7 @@
     - linux-cachyos-bmq-zfs
     - linux-cachyos-bore-zfs
     - linux-cachyos-cacule-zfs
-    - linux-cachyos-cfs-zfs
     - linux-cachyos-hardened-zfs
-    - linux-cachyos-pds-zfs
-    - linux-cachyos-tt-zfs
 - name: "CachyOS Kernels"
   description: "Selection of different cachyos kernels"
   hidden: true
@@ -272,14 +271,8 @@
     - linux-cachyos-bore-headers
     - linux-cachyos-cacule
     - linux-cachyos-cacule-headers
-    - linux-cachyos-cfs
-    - linux-cachyos-cfs-headers
     - linux-cachyos-hardened
     - linux-cachyos-hardened-headers
-    - linux-cachyos-pds
-    - linux-cachyos-pds-headers
-    - linux-cachyos-tt
-    - linux-cachyos-tt-headers
 # DE groups MUST be `hidden: false` + `selected: false` for the desktop chooser
 # to work. WHY hidden:false: the packagechooser (method: netinstall-select) makes
 # its pick install by force-SELECTING the matching group via
@@ -341,19 +334,13 @@
     - plasma-nm
     - plasma-pa
     - plasma-workspace
-    # plasma-x11-session ships /usr/share/xsessions/plasmax11.desktop. In
-    # Plasma 6 the X11 session is a SEPARATE package: without it the installed
-    # system has ONLY the Wayland session, which fails on VirtualBox/VMSVGA (no
-    # DRM/GBM/EGL) and loops back to the login screen ("Could not start systemd
-    # managed Plasma session: TransactionIsDestructive", 2026-06-05). Genesi
-    # defaults new users to this X11 session (shellprocess@genesi_session), so
-    # it is REQUIRED, not optional.
-    #
-    # It used to live in pacstrap.conf's basePackages, which is exactly why
-    # every install got Plasma regardless of the desktop chooser. It moved here
-    # with the rest of the Plasma stack: KDE still gets it, everyone else
-    # finally does not.
-    - plasma-x11-session
+    # plasma-x11-session USED to be here, required: Genesi defaulted KDE users to
+    # the X11 session because Wayland looped back to the login screen on
+    # VirtualBox/VMSVGA (2026-06-05). Plasma 6.8 removed the X11 session --
+    # Arch dropped plasma-x11-session and kwin-x11 (2026-10) -- and a critical
+    # group naming a package that no longer exists aborts every KDE install
+    # (the ISO gate caught it). genesi-set-session.sh now picks Wayland when
+    # the X11 session file is absent.
     # KDE's polkit authentication agent, likewise moved out of basePackages.
     - polkit-kde-agent
     - plasma-integration
