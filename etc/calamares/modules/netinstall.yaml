@@ -100,7 +100,11 @@
         packages:
           - xf86-video-amdgpu
           - xf86-video-ati
-          - xf86-video-intel
+          # No xf86-video-intel. The SDDM greeter runs on Xorg, and Arch's
+          # Xorg picks that driver for every Intel GPU when it is installed.
+          # It is unmaintained and does not handle Meteor Lake and newer
+          # (Core Ultra / Arc), so the login screen came up black on both
+          # the panel and HDMI. Xorg's built-in modesetting covers all Intel.
       - name: "Network"
         description: "Network apps drivers and tools"
         selected: true
@@ -364,7 +368,7 @@
     - xorg-xdpyinfo
     - xf86-video-amdgpu
     - xf86-video-ati
-    - xf86-video-intel
+    # No xf86-video-intel: see the "GPU drivers" group above.
     - xf86-input-libinput
     - xf86-video-fbdev
     - xf86-video-vesa
